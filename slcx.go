@@ -12,6 +12,7 @@ import (
 )
 
 var secret = []byte("zhimakaimen")
+var version = "v1.1"
 
 var certPem = []byte(`-----BEGIN CERTIFICATE-----
 MIIDETCCAfkCFH4gCl26J7MJJPCjk9HAlHrpPP3bMA0GCSqGSIb3DQEBCwUAMEUx
@@ -163,6 +164,7 @@ func usage() {
 	}
 
 	fileName := filepath.Base(executable)
+	fmt.Println(fmt.Sprintf("slcx %s open source: https://github.com/sechelper/slcx", version))
 	fmt.Println("options:")
 	fmt.Printf("\t%s laoban_ip:laoban_port forword_ip:forword_port --laoban\n", fileName)
 	fmt.Printf("\t%s niuma_ip:niuma_port laoban_ip:laoban_port --niuma\n", fileName)
