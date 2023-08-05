@@ -8,7 +8,10 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 )
+
+var secret = []byte("zhimakaimen")
 
 var certPem = []byte(`-----BEGIN CERTIFICATE-----
 MIIDETCCAfkCFH4gCl26J7MJJPCjk9HAlHrpPP3bMA0GCSqGSIb3DQEBCwUAMEUx
@@ -102,15 +105,14 @@ func laoban(laobanAddr string, forwardAddr string) {
 	defer l1.Close()
 	defer l2.Close()
 	log.Println("laoban listening on", laobanAddr)
+	mutex := sync.RWMutex{}
 	for {
-		var loaban net.Conn
-		go func() {
-			loaban, err = l1.Accept()
-			log.Println("niuma report for", loaban.RemoteAddr())
-			if err != nil {
-				log.Println(err)
-			}
-		}()
+		mutex.Lock()
+		niuma, err := l1.Accept()
+		log.Println("niuma report for", niuma.RemoteAddr())
+		if err != nil {
+			log.Println(err)
+		}
 
 		fw, err := l2.Accept()
 		log.Println("start forward data for", fw.RemoteAddr())
@@ -118,25 +120,40 @@ func laoban(laobanAddr string, forwardAddr string) {
 			log.Println(err)
 		}
 
-		go forward(loaban, fw)
+		niuma.Write(secret)
+
+		go forward(niuma, fw)
+		mutex.Unlock()
 	}
 }
 
 func niuma(laobanAddr, forwardAddr string) {
+	mutex := sync.RWMutex{}
+	for {
+		mutex.Lock()
+		laoban, err := tls.Dial("tcp", laobanAddr, config())
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("start reporting to the laoban")
 
-	laoban, err := tls.Dial("tcp", laobanAddr, config())
-	if err != nil {
-		log.Fatal(err)
+		fw, err := net.Dial("tcp", forwardAddr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("start forwarding data")
+		for {
+			_secret := make([]byte, len(secret))
+			_, err := laoban.Read(_secret)
+
+			if err != nil || string(_secret) == string(secret) {
+				break
+			}
+		}
+
+		go forward(fw, laoban)
+		mutex.Unlock()
 	}
-	log.Println("start reporting to the laoban")
-
-	fw, err := net.Dial("tcp", forwardAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("start forwarding data")
-
-	forward(fw, laoban)
 }
 
 func usage() {
@@ -151,7 +168,7 @@ func usage() {
 	fmt.Printf("\t%s niuma_ip:niuma_port laoban_ip:laoban_port --niuma\n", fileName)
 	fmt.Println("e.g.:")
 	fmt.Printf("\t%s :4444 127.0.0.1:4443 --laoban\n", fileName)
-	fmt.Printf("\t%s 192.168.1.10:4444 127.0.0.1:22 --niuma\n", fileName)
+	fmt.Printf("\t%s 127.0.0.1:22 192.168.1.10:4444 --niuma\n", fileName)
 }
 
 func main() {
@@ -164,7 +181,7 @@ func main() {
 	case "--laoban":
 		laoban(os.Args[1], os.Args[2])
 	case "--niuma":
-		niuma(os.Args[1], os.Args[2])
+		niuma(os.Args[2], os.Args[1])
 	default:
 		usage()
 	}
