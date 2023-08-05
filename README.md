@@ -20,6 +20,14 @@ $ slcx :4444 127.0.0.1:4443 --laoban
 $ slcx 192.168.1.10:4444 127.0.0.1:22 --niuma
 ```
 
+连接本地4443端口成功登入ssh
+
+```bash
+$ ssh vulab@127.0.0.1 -p 4443
+```
+
+![](doc/img/ssh-login.png)
+
 ## 未来计划
 
 [ ] 支持unix sock
