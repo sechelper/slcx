@@ -23,7 +23,7 @@ $ slcx 192.168.1.10:4443 127.0.0.1:22 --niuma
 **ssh login**
 
 ```bash
-$ ssh vulab@127.0.0.1 -p 4443
+$ ssh vulab@127.0.0.1 -p 4444
 ```
 
 ## Future
