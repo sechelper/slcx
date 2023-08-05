@@ -19,7 +19,7 @@ import (
 )
 
 var secret = []byte("zhimakaimen")
-var version = "v1.1"
+var version = "v1.0.2"
 
 func randomString(length int) string {
 	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
